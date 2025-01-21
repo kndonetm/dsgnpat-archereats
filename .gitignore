@@ -1,4 +1,6 @@
 # gitignore settings for node.js projects
+.env
+
 
 # Logs
 logs
