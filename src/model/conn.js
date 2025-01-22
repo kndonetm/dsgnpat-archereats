@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 
 const mongoURI = process.env.MONGODB_URI;
+console.log(process.env)
 const client = new MongoClient(mongoURI, { useUnifiedTopology: true}, { useNewUrlParser: true }, { connectTimeoutMS: 30000 }, { keepAlive: 1});
 
 export async function connectToMongo() {

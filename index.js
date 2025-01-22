@@ -1,6 +1,8 @@
 import { dirname } from "path";
 import { fileURLToPath } from 'url';
 
+import 'dotenv/config'
+
 import express from 'express';
 import exphbs from 'express-handlebars';
 import cookieParser from 'cookie-parser'
@@ -14,7 +16,6 @@ import hbsHelpers from './src/modules/handlebars-helpers/helpers.js'
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken'
 import { ObjectId } from "mongodb"
-
 
 const app = express();
 app.use(cookieParser())
@@ -69,7 +70,7 @@ app.use(express.json());
 
 app.use(router);
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.SERVER_PORT, () => {
     console.log("Express app now listening...");
     connectToMongo();
 });
