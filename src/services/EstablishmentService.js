@@ -1,11 +1,11 @@
-import EstablishmentMapper from "../data/EstablishmentMapper.js";
+import EstablishmentGateway from "../model/EstablishmentGateway.js";
 import ReviewService from "./ReviewService.js";
 
 // Business logic for fetching establishmet details, reviews, ratings
 class EstablishmentService {
     static async getEstablishmentDetails(username, currentUser) {
         // Fetch establishment data
-        const establishment = await EstablishmentMapper.getByUsername(username);
+        const establishment = await EstablishmentGateway.getByUsername(username);
         if (!establishment) return null;
 
         // Fetch and process reviews
@@ -15,7 +15,7 @@ class EstablishmentService {
         const rating = ReviewService.calculateAverageRating(reviews);
 
         // Update establishment rating in database
-        await EstablishmentMapper.updateRating(establishment._id, rating);
+        await EstablishmentGateway.updateRating(establishment._id, rating);
 
         return {
             title: establishment.displayedName,

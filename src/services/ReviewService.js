@@ -1,11 +1,11 @@
-import ReviewMapper from "../data/ReviewMapper.js";
+import ReviewGateway from "../model/ReviewGateway.js";
 import Review from "../model/Review.js";
 
 // Processes reviews unraw
 class ReviewService {
     static async getReviewsByEstablishment(establishmentId, currentUser) {
         // Fetch raw review data
-        const reviewDataList = await ReviewMapper.getByEstablishmentId(establishmentId);
+        const reviewDataList = await ReviewGateway.getByEstablishmentId(establishmentId);
 
         // Convert raw data into Review objects
         let reviews = reviewDataList.map(data => new Review(data));
