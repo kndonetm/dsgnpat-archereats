@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { getDb } from "../model/conn.js";
+import { getDb } from "./conn.js";
 
 class ReviewGateway {
     constructor() {
