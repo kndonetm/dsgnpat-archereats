@@ -13,7 +13,7 @@ class ReviewGateway {
      * @returns {Promise<Array>} List of reviews with user and comment data
      */
     async getByEstablishmentId(establishmentId) {
-        return await this.collection.aggregate([
+        return this.collection.aggregate([
             {
                 '$match': { 'establishmentId': new ObjectId(establishmentId) }
             },
@@ -90,7 +90,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} The review document
      */
     async getById(reviewId) {
-        return await this.collection.findOne({ _id: new ObjectId(reviewId) });
+        return this.collection.findOne({ _id: new ObjectId(reviewId) });
     }
 
     /**
@@ -110,7 +110,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} MongoDB update result
      */
     async update(reviewId, updatedData) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(reviewId) },
             { $set: updatedData }
         );
@@ -122,7 +122,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} MongoDB delete result
      */
     async delete(reviewId) {
-        return await this.collection.deleteOne({ _id: new ObjectId(reviewId) });
+        return this.collection.deleteOne({ _id: new ObjectId(reviewId) });
     }
 
     /**
@@ -132,7 +132,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} MongoDB update result
      */
     async likeReview(reviewId, userId) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(reviewId) },
             {
                 $addToSet: { likes: new ObjectId(userId) },
@@ -148,7 +148,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} MongoDB update result
      */
     async unlikeReview(reviewId, userId) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(reviewId) },
             { $pull: { likes: new ObjectId(userId) } }
         );
@@ -161,7 +161,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} MongoDB update result
      */
     async dislikeReview(reviewId, userId) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(reviewId) },
             {
                 $addToSet: { dislikes: new ObjectId(userId) },
@@ -177,7 +177,7 @@ class ReviewGateway {
      * @returns {Promise<Object>} MongoDB update result
      */
     async undislikeReview(reviewId, userId) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(reviewId) },
             { $pull: { dislikes: new ObjectId(userId) } }
         );

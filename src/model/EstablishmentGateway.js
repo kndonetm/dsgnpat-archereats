@@ -13,7 +13,7 @@ class EstablishmentGateway {
      * @returns {Promise<Object>}
      */
     async getByUsername(username) {
-        return await this.collection.findOne({ username });
+        return this.collection.findOne({ username });
     }
 
     /**
@@ -22,7 +22,7 @@ class EstablishmentGateway {
      * @returns {Promise<Object>}
      */
     async getById(id) {
-        return await this.collection.findOne({ _id: new ObjectId(id) });
+        return this.collection.findOne({ _id: new ObjectId(id) });
     }
 
     /**
@@ -31,7 +31,7 @@ class EstablishmentGateway {
      * @returns {Promise<Object>}
      */
     async insertEstablishment(establishmentData) {
-        return await this.collection.insertOne(establishmentData);
+        return this.collection.insertOne(establishmentData);
     }
 
     /**
@@ -41,7 +41,7 @@ class EstablishmentGateway {
      * @returns {Promise<Object>}
      */
     async updateEstablishment(id, updateData) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(id) },
             { $set: updateData }
         );
@@ -54,7 +54,7 @@ class EstablishmentGateway {
      * @returns {Promise<Object>}
      */
     async updateRating(establishmentId, rating) {
-        return await this.collection.updateOne(
+        return this.collection.updateOne(
             { _id: new ObjectId(establishmentId) },
             { $set: { rating: rating } }
         );
@@ -66,7 +66,7 @@ class EstablishmentGateway {
      * @returns {Promise<Object>}
      */
     async deleteEstablishment(id) {
-        return await this.collection.deleteOne({ _id: new ObjectId(id) });
+        return this.collection.deleteOne({ _id: new ObjectId(id) });
     }
 
     /**
@@ -75,7 +75,7 @@ class EstablishmentGateway {
      * @returns {Promise<Array>}
      */
     async getAllEstablishments(filter = {}) {
-        return await this.collection.find(filter).toArray();
+        return this.collection.find(filter).toArray();
     }
 }
 
