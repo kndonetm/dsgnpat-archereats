@@ -188,6 +188,10 @@ class ReviewGateway {
             { $pull: { dislikes: new ObjectId(userId) } }
         )
     }
+
+    async getReviewsByUserId(userId) {
+        return await this.collection.find({ userId: new ObjectId(userId) }).toArray();
+    }
 }
 
 export default new ReviewGateway()
