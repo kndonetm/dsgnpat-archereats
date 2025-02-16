@@ -10,7 +10,12 @@ class EstablishmentService {
 
         // Fetch and process reviews
         let reviews = await ReviewService.getReviewsByEstablishment(establishment._id, currentUser);
-        
+        reviews = reviews.map(r => r.toJSON())
+        const userReview = reviews.find(r => r.userId.toString() === currentUser?._id.toString()) || null
+        const otherReviews = reviews.filter(r => r.userId.toString() !== currentUser?._id.toString())
+
+        console.log(otherReviews.slice(0, 2))
+
         // Calculate rating
         const rating = ReviewService.calculateAverageRating(reviews);
 
@@ -22,9 +27,9 @@ class EstablishmentService {
             selectedEstab: establishment,
             rateSummary: ReviewService.getReviewSummary(reviews),
             isEstab: currentUser?.establishmentId?.toString() === establishment._id.toString(),
-            userReview: reviews.find(r => r.userId.toString() === currentUser?._id.toString()) || null,
-            topReviews: reviews.slice(0, 2),
-            truncatedReviews: reviews.slice(2),
+            userReview: userReview,
+            topReviews: otherReviews.slice(0, 2),
+            truncatedReviews: otherReviews.slice(2),
             currentUser: currentUser ? currentUser._id.toString() : null,
             css: '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">'
         };

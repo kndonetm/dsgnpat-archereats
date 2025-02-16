@@ -3,15 +3,12 @@ import Review from "../model/Review.js";
 
 // Processes reviews unraw
 class ReviewService {
-    static async getReviewsByEstablishment(establishmentId, currentUser) {
+    static async getReviewsByEstablishment(establishmentId) {
         // Fetch raw review data
         const reviewDataList = await ReviewGateway.getByEstablishmentId(establishmentId);
 
         // Convert raw data into Review objects
         let reviews = reviewDataList.map(data => new Review(data));
-
-        // Exclude current user's review from general list
-        reviews = reviews.filter(r => r.userId.toString() !== currentUser?._id.toString());
 
         return reviews;
     }
