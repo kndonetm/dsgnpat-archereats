@@ -163,10 +163,8 @@ router.patch('/', JWTService.assertLoggedIn, async (req, res) => {
     let usedGateway
     if (isReview) {
         usedGateway = ReviewGateway
-        console.log('Review gateway')
     } else {
         usedGateway = CommentGateway
-        console.log('Comment gateway')
     }
 
     let reviewOrComment = await usedGateway.getById(reviewId)
