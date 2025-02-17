@@ -1,11 +1,9 @@
 import { ObjectId } from 'mongodb'
-
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
+
 import searchRouter from './search-router.js'
 import userRouter from './user-router.js'
 import establishmentRouter from './establishment-router.js'
-
 import loginRegisterRouter from '../routes/login-register-router.js'
 
 import Review from '../model/Review.js'
@@ -15,6 +13,7 @@ import UserGateway from '../model/UserGateway.js'
 import CommentGateway from '../model/CommentGateway.js'
 
 import FileSystemService from '../services/FileSystemService.js'
+import JWTService from '../services/JWTService.js'
 
 const router = Router()
 
@@ -42,119 +41,94 @@ router.use(loginRegisterRouter)
 
 router
     .route('/review')
-    .post(FileSystemService.uploadMedia, async function (req, res) {
-        const { estabID, title, rate, content } = req.body
-        const { imageURLs, videoURLs } = FileSystemService.splitImagesVideos(
-            req.files
-        )
+    .post(
+        FileSystemService.uploadMedia,
+        JWTService.assertLoggedIn,
+        async function (req, res) {
+            const { estabID, title, rate, content, userID } = req.body
+            const { imageURLs, videoURLs } =
+                FileSystemService.splitImagesVideos(req.files)
 
-        let userID
-        let token = req.cookies.jwt
-        if (token) {
-            try {
-                const decodedToken = await jwt.verify(token, 'secret')
-                userID = decodedToken._id
-            } catch (err) {
-                console.log('Error occurred:', err)
-            }
-        }
+            if (title && rate && content) {
+                let currentUser = await UserGateway.getById(userID)
 
-        if (userID == null) {
-            res.sendStatus(401)
-            return
-        }
-
-        if (title && rate && content) {
-            let currentUser = await UserGateway.getById(userID)
-
-            const newReview = new Review({
-                title: title,
-                rating: rate,
-                content: content,
-                likes: [],
-                dislikes: [],
-                edited: false,
-                images: imageURLs,
-                videos: videoURLs,
-                datePosted: new Date(),
-                estabResponse: null,
-                establishmentId: new ObjectId(estabID),
-                userId: new ObjectId(userID),
-            })
-
-            try {
-                let resp = await ReviewGateway.insert(newReview.toJSON())
-                console.log(resp)
-            } catch (err) {
-                console.log('Error occurred:', err)
-                res.sendStatus(500)
-            }
-
-            res.status(200).send({ review: newReview, user: currentUser })
-        } else {
-            res.sendStatus(400)
-        }
-    })
-    .patch(FileSystemService.uploadMedia, async function (req, res) {
-        const { title, rate, content, reviewID } = req.body
-        const { imageURLs, videoURLs } = FileSystemService.splitImagesVideos(
-            req.files
-        )
-
-        let userID
-        let token = req.cookies.jwt
-        if (token) {
-            try {
-                const decodedToken = await jwt.verify(token, 'secret')
-                userID = decodedToken._id
-            } catch (err) {
-                console.log('Error occurred:', err)
-            }
-        }
-        if (userID == null) {
-            res.sendStatus(401)
-            return
-        }
-
-        let review = await ReviewGateway.getById(reviewID)
-        if (review != null) {
-            for (let img of review.images)
-                FileSystemService.deleteMedia(img.substring(7))
-            for (let vid of review.videos)
-                FileSystemService.deleteMedia(vid.substring(7))
-        }
-
-        if (title && rate && content) {
-            let currentUser = await UserGateway.getById(userID)
-
-            try {
-                let resp = await ReviewGateway.update(reviewID, {
+                const newReview = new Review({
                     title: title,
                     rating: rate,
                     content: content,
-                    edited: true,
+                    likes: [],
+                    dislikes: [],
+                    edited: false,
                     images: imageURLs,
                     videos: videoURLs,
+                    datePosted: new Date(),
+                    estabResponse: null,
+                    establishmentId: new ObjectId(estabID),
+                    userId: new ObjectId(userID),
                 })
 
-                console.log(resp)
-            } catch (err) {
-                console.log('Error occurred:', err)
-                res.sendStatus(500)
+                try {
+                    let resp = await ReviewGateway.insert(newReview.toJSON())
+                    console.log(resp)
+                } catch (err) {
+                    console.log('Error occurred:', err)
+                    res.sendStatus(500)
+                }
+
+                res.status(200).send({ review: newReview, user: currentUser })
+            } else {
+                res.sendStatus(400)
             }
-            res.status(200)
-            res.send({
-                title: title,
-                content: content,
-                rating: rate,
-                images: imageURLs,
-                videos: videoURLs,
-                user: currentUser,
-            })
-        } else {
-            res.sendStatus(400)
         }
-    })
+    )
+    .patch(
+        FileSystemService.uploadMedia,
+        JWTService.assertLoggedIn,
+        async function (req, res) {
+            const { title, rate, content, reviewID, userID } = req.body
+            const { imageURLs, videoURLs } =
+                FileSystemService.splitImagesVideos(req.files)
+
+            let review = await ReviewGateway.getById(reviewID)
+            if (review != null) {
+                for (let img of review.images)
+                    FileSystemService.deleteMedia(img.substring(7))
+                for (let vid of review.videos)
+                    FileSystemService.deleteMedia(vid.substring(7))
+            }
+
+            if (title && rate && content) {
+                let currentUser = await UserGateway.getById(userID)
+
+                try {
+                    let resp = await ReviewGateway.update(reviewID, {
+                        title: title,
+                        rating: rate,
+                        content: content,
+                        edited: true,
+                        images: imageURLs,
+                        videos: videoURLs,
+                    })
+
+                    console.log(resp)
+                } catch (err) {
+                    console.log('Error occurred:', err)
+                    res.sendStatus(500)
+                }
+                res.status(200)
+                res.send({
+                    title: title,
+                    content: content,
+                    rating: rate,
+                    images: imageURLs,
+                    videos: videoURLs,
+                    user: currentUser,
+                })
+            } else {
+                res.sendStatus(400)
+            }
+        }
+    )
     .delete(async function (req, res) {
         let { reviewId } = req.body
 
@@ -182,77 +156,47 @@ router
         }
     })
 
-router.patch('/', async (req, res) => {
-    let userId
-    let token = req.cookies.jwt
-    if (token) {
-        try {
-            const decodedToken = await jwt.verify(token, 'secret')
-            userId = decodedToken._id
-        } catch (err) {
-            console.log('Error occurred:', err)
-        }
-    }
+router.patch('/', JWTService.assertLoggedIn, async (req, res) => {
+    let { reviewId, updateH: updateCode, userID } = req.body
 
-    if (userId == null) {
-        res.sendStatus(401)
+    const isReview = await ReviewGateway.getById(reviewId)
+    let usedGateway
+    if (isReview) {
+        usedGateway = ReviewGateway
+        console.log('Review gateway')
     } else {
-        let { reviewId, updateH: updateCode } = req.body
-
-        const isReview = await ReviewGateway.getById(reviewId)
-        let usedGateway
-        if (isReview) {
-            usedGateway = ReviewGateway
-            console.log('Review gateway')
-        } else {
-            usedGateway = CommentGateway
-            console.log('Comment gateway')
-        }
-
-        let reviewOrComment = await usedGateway.getById(reviewId)
-        let response
-        switch (updateCode) {
-            case 'up':
-                if (reviewOrComment.likes.includes(userId) == false)
-                    response = await usedGateway.like(reviewId, userId)
-                break
-            case 'up_':
-                response = await usedGateway.unlike(reviewId, userId)
-                break
-            case 'down':
-                if (reviewOrComment.dislikes.includes(userId) == false)
-                    response = await usedGateway.dislike(reviewId, userId)
-                break
-            case 'down_':
-                response = await usedGateway.undislike(reviewId, userId)
-                break
-        }
-
-        console.log(response)
-        res.status(200)
-        res.send('done')
+        usedGateway = CommentGateway
+        console.log('Comment gateway')
     }
+
+    let reviewOrComment = await usedGateway.getById(reviewId)
+    let response
+    switch (updateCode) {
+        case 'up':
+            if (reviewOrComment.likes.includes(userID) == false)
+                response = await usedGateway.like(reviewId, userID)
+            break
+        case 'up_':
+            response = await usedGateway.unlike(reviewId, userID)
+            break
+        case 'down':
+            if (reviewOrComment.dislikes.includes(userID) == false)
+                response = await usedGateway.dislike(reviewId, userID)
+            break
+        case 'down_':
+            response = await usedGateway.undislike(reviewId, userID)
+            break
+    }
+
+    console.log(response)
+    res.status(200)
+    res.send('done')
 })
 
 router
     .route('/comment')
-    .post(async function (req, res) {
-        let { revID, parID, text } = req.body
-
-        let userID
-        let token = req.cookies.jwt
-        if (token) {
-            try {
-                const decodedToken = await jwt.verify(token, 'secret')
-                userID = decodedToken._id
-            } catch (err) {
-                console.log('Error occurred:', err)
-            }
-        }
-        if (userID == null) {
-            res.sendStatus(401)
-            return
-        }
+    .post(JWTService.assertLoggedIn, async function (req, res) {
+        let { revID, parID, text, userID } = req.body
 
         if (parID == 'null') {
             parID = null

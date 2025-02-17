@@ -22,9 +22,6 @@ class EstablishmentService {
             (r) => r.userId.toString() !== currentUser?._id.toString()
         )
 
-        console.log('reviews: ', reviews)
-        console.log('UserReview: ', userReview)
-
         // Calculate rating
         const rating = ReviewService.calculateAverageRating(reviews)
 
