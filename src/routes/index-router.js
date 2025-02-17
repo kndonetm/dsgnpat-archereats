@@ -6,7 +6,6 @@ import searchRouter from './search-router.js'
 import userRouter from './user-router.js'
 import establishmentRouter from './establishment-router.js'
 
-import fs from 'fs'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import loginRegisterRouter from '../routes/login-register-router.js'
@@ -19,7 +18,6 @@ import CommentGateway from '../model/CommentGateway.js'
 
 import FileSystemService from '../services/FileSystemService.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url)) // directory URL
 const router = Router()
 
 router.get('/', async function (req, res) {
@@ -95,6 +93,9 @@ router
     })
     .patch(FileSystemService.uploadMedia, async function (req, res) {
         const { title, rate, content, reviewID } = req.body
+        const { imageURLs, videoURLs } = FileSystemService.splitImagesVideos(
+            req.files
+        )
 
         let userID
         let token = req.cookies.jwt
@@ -107,31 +108,13 @@ router
             }
         }
 
-        let imageURls = []
-        let videoUrls = []
-        for (let files of req.files) {
-            let type = files.mimetype
-            if (type.split('/')[0] == 'image')
-                imageURls.push('/static/assets/reviewPics/' + files.filename)
-            else videoUrls.push('/static/assets/reviewPics/' + files.filename)
-        }
         let review = await ReviewGateway.getById(reviewID)
 
         if (review != null) {
             for (let img of review.images)
-                fs.unlink(
-                    __dirname + '../../../public' + img.substring(7),
-                    (err) => {
-                        if (err) console.error('Error deleting file:', err)
-                    }
-                )
+                FileSystemService.deleteMedia(img.substring(7))
             for (let vid of review.videos)
-                fs.unlink(
-                    __dirname + '../../../public' + vid.substring(7),
-                    (err) => {
-                        if (err) console.error('Error deleting file:', err)
-                    }
-                )
+                FileSystemService.deleteMedia(vid.substring(7))
         }
 
         if (userID == null) {
@@ -145,8 +128,8 @@ router
                     rating: rate,
                     content: content,
                     edited: true,
-                    images: imageURls,
-                    videos: videoUrls,
+                    images: imageURLs,
+                    videos: videoURLs,
                 })
 
                 console.log(resp)
@@ -159,8 +142,8 @@ router
                 title: title,
                 content: content,
                 rating: rate,
-                images: imageURls,
-                videos: videoUrls,
+                images: imageURLs,
+                videos: videoURLs,
                 user: theUSER,
             })
         } else {
@@ -176,19 +159,9 @@ router
 
             if (review != null) {
                 for (let img of review.images)
-                    fs.unlink(
-                        __dirname + '../../../public' + img.substring(7),
-                        (err) => {
-                            if (err) console.error('Error deleting file:', err)
-                        }
-                    )
+                    FileSystemService.deleteMedia(img.substring(7))
                 for (let vid of review.videos)
-                    fs.unlink(
-                        __dirname + '../../../public' + vid.substring(7),
-                        (err) => {
-                            if (err) console.error('Error deleting file:', err)
-                        }
-                    )
+                    FileSystemService.deleteMedia(vid.substring(7))
             }
 
             try {
@@ -298,7 +271,7 @@ router
                 edited: false,
             }
             try {
-                let resp = await comments_db.insertOne(newComment)
+                let resp = await CommentGateway.insertComment(newComment)
                 console.log(resp)
             } catch (err) {
                 console.log('Error occurred:', err)

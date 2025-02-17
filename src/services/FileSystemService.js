@@ -1,8 +1,15 @@
 import multer from 'multer'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 
-const DIRNAME = path.dirname(fileURLToPath(import.meta.url))
+const DIRNAME = path.dirname(fileURLToPath(import.meta.url)) // directory URL
+
+// kind of a hacky solution, since this depends on the file's location in the source tree
+// node.js doesn't implement any easy ways to get the root directory of the folder
+// ultimately, the real solution to this problem is to not store images directly on the
+// server filesystem, but can't really change that as of yet
+const PUBLIC_DIRNAME = DIRNAME + '../../../public'
 
 const uploadPfpMiddleware = multer({
     storage: multer.diskStorage({
@@ -47,6 +54,12 @@ class FileSystemService {
         }
 
         return { imageURLs: imageURLs, videoURLs: videoURLs }
+    }
+
+    static deleteMedia(filename) {
+        fs.unlink(PUBLIC_DIRNAME + filename, (err) => {
+            if (err) console.error('Error deleting file:', err)
+        })
     }
 }
 

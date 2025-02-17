@@ -1,4 +1,5 @@
 import ReviewGateway from '../model/ReviewGateway.js'
+import CommentGateway from '../model/CommentGateway.js'
 import Review from '../model/Review.js'
 
 // Processes reviews unraw
