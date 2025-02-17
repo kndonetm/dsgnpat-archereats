@@ -8,9 +8,9 @@
                                 <span><img class="img-fluid" src="{{this}}"></span>
                             {{/each}}
                             
-                            {{#if nTruncatedMedia}}
+                            {{#if totalTruncatedMedia}}
                             <button class="imgBtn" data-bs-toggle="modal" style="background-image:linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{truncatedImages.[0]}}');"
-                                data-bs-target=".c00000.moreImg">+{{nTruncatedMedia}}</button>
+                                data-bs-target=".c00000.moreImg">+{{totalTruncatedMedia}}</button>
                             {{/if}}
                         </div>
 

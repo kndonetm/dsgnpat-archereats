@@ -2,16 +2,14 @@ import { ObjectId } from 'mongodb'
 
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
-import multer from 'multer'
 import searchRouter from './search-router.js'
 import userRouter from './user-router.js'
 import establishmentRouter from './establishment-router.js'
 
 import fs from 'fs'
-import { dirname, relative } from 'path'
+import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import loginRegisterRouter from '../routes/login-register-router.js'
-import uploadPfp from '../middleware/upload.js'
 
 import Review from '../model/Review.js'
 import ReviewGateway from '../model/ReviewGateway.js'
@@ -23,22 +21,6 @@ import FileSystemService from '../services/FileSystemService.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url)) // directory URL
 const router = Router()
-
-/**
-const db = getDb();
-const reviews_db = db.collection("reviews");
-const comments_db = db.collection("comments");
-*/
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/assets/reviewPics/')
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '_' + file.originalname)
-    },
-})
-const upload = multer({ storage: storage })
 
 router.get('/', async function (req, res) {
     const establishments = await EstablishmentGateway.getAllEstablishments()
@@ -66,15 +48,9 @@ router
     .route('/review')
     .post(FileSystemService.uploadMedia, async function (req, res) {
         const { estabID, title, rate, content } = req.body
-
-        let imageURls = []
-        let videoUrls = []
-        for (let files of req.files) {
-            let type = files.mimetype
-            if (type.split('/')[0] == 'image')
-                imageURls.push('/static/assets/reviewPics/' + files.filename)
-            else videoUrls.push('/static/assets/reviewPics/' + files.filename)
-        }
+        const { imageURLs, videoURLs } = FileSystemService.splitImagesVideos(
+            req.files
+        )
 
         let userID
         let token = req.cookies.jwt
@@ -98,8 +74,8 @@ router
                 likes: [],
                 dislikes: [],
                 edited: false,
-                images: imageURls,
-                videos: videoUrls,
+                images: imageURLs,
+                videos: videoURLs,
                 datePosted: new Date(),
                 estabResponse: null,
                 establishmentId: new ObjectId(estabID),

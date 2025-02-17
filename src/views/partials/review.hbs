@@ -45,8 +45,8 @@
                 </p>
 
                 <!-- media  -->
-                {{#if nMedia}}
-                {{> revMedia this}}
+                {{#if media.totalMedia}}
+                {{> revMedia media}}
                 {{/if}}
 
             </div>
@@ -85,8 +85,8 @@
         </p>
 
         <!-- media  -->
-        {{#if nMedia}}
-        {{> revMedia this}}
+        {{#if media.totalMedia}}
+        {{> revMedia media}}
         {{/if}}
 
         <!-- icons -->

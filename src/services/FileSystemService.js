@@ -1,5 +1,8 @@
 import multer from 'multer'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const DIRNAME = path.dirname(fileURLToPath(import.meta.url))
 
 const uploadPfpMiddleware = multer({
     storage: multer.diskStorage({
@@ -30,6 +33,20 @@ class FileSystemService {
 
     static uploadMedia(req, res, next) {
         uploadMediaMiddleware.array('mediaInput')(req, res, next)
+    }
+
+    static splitImagesVideos(files) {
+        let imageURLs = []
+        let videoURLs = []
+
+        for (let file of files) {
+            let type = file.mimetype
+            if (type.split('/')[0] == 'image')
+                imageURLs.push('/static/assets/reviewPics/' + file.filename)
+            else videoURLs.push('/static/assets/reviewPics/' + file.filename)
+        }
+
+        return { imageURLs: imageURLs, videoURLs: videoURLs }
     }
 }
 

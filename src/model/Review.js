@@ -7,7 +7,7 @@ class Review {
         this.content = data.content
 
         // rating should be cast to an integral type
-        if (typeof data.rating === "string") {
+        if (typeof data.rating === 'string') {
             this.rating = parseInt(data.rating)
         } else {
             // assume integral type
@@ -26,13 +26,11 @@ class Review {
     }
 
     getProcessedMedia() {
-        const topVideos = this.videos.slice(0, 3)
-        const truncatedVideos = this.videos.slice(3)
-        const topImages = this.images.slice(
-            0,
-            Math.max(3 - topVideos.length, 0)
-        )
-        const truncatedImages = this.images.slice(topImages.length)
+        const topVideos = this.videos.slice(0, 3) || []
+        const truncatedVideos = this.videos.slice(3) || []
+        const topImages =
+            this.images.slice(0, Math.max(3 - topVideos.length, 0)) || []
+        const truncatedImages = this.images.slice(topImages.length) || []
 
         return {
             topVideos,
@@ -40,6 +38,8 @@ class Review {
             topImages,
             truncatedImages,
             totalMedia: this.images.length + this.videos.length,
+            totalTruncatedMedia:
+                truncatedImages.length + truncatedVideos.length,
         }
     }
 
