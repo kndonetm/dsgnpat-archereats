@@ -19,6 +19,8 @@ import EstablishmentGateway from '../model/EstablishmentGateway.js'
 import UserGateway from '../model/UserGateway.js'
 import CommentGateway from '../model/CommentGateway.js'
 
+import FileSystemService from '../services/FileSystemService.js'
+
 const __dirname = dirname(fileURLToPath(import.meta.url)) // directory URL
 const router = Router()
 
@@ -251,10 +253,10 @@ router.patch('/', async (req, res) => {
 
         if (x) {
             usedGateway = ReviewGateway
-            console.log("Review gateway")
+            console.log('Review gateway')
         } else {
             usedGateway = CommentGateway
-            console.log("Comment gateway")
+            console.log('Comment gateway')
         }
         let reviewOrComment = await usedGateway.getById(reviewId)
         let resp
@@ -440,7 +442,7 @@ router
         res.send('deleted estab respo')
     })
 
-router.post('/upload', uploadPfp.single('file'), (req, res) => {
+router.post('/upload', FileSystemService.uploadPfp, (req, res) => {
     let filePath
     try {
         filePath = req.file.path
