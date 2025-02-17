@@ -6,8 +6,6 @@ import searchRouter from './search-router.js'
 import userRouter from './user-router.js'
 import establishmentRouter from './establishment-router.js'
 
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
 import loginRegisterRouter from '../routes/login-register-router.js'
 
 import Review from '../model/Review.js'
@@ -63,8 +61,12 @@ router
 
         if (userID == null) {
             res.sendStatus(401)
-        } else if (title && rate && content) {
-            let theUSER = await UserGateway.getById(userID)
+            return
+        }
+
+        if (title && rate && content) {
+            let currentUser = await UserGateway.getById(userID)
+
             const newReview = new Review({
                 title: title,
                 rating: rate,
@@ -79,6 +81,7 @@ router
                 establishmentId: new ObjectId(estabID),
                 userId: new ObjectId(userID),
             })
+
             try {
                 let resp = await ReviewGateway.insert(newReview.toJSON())
                 console.log(resp)
@@ -86,7 +89,8 @@ router
                 console.log('Error occurred:', err)
                 res.sendStatus(500)
             }
-            res.status(200).send({ review: newReview, user: theUSER })
+
+            res.status(200).send({ review: newReview, user: currentUser })
         } else {
             res.sendStatus(400)
         }
@@ -107,9 +111,12 @@ router
                 console.log('Error occurred:', err)
             }
         }
+        if (userID == null) {
+            res.sendStatus(401)
+            return
+        }
 
         let review = await ReviewGateway.getById(reviewID)
-
         if (review != null) {
             for (let img of review.images)
                 FileSystemService.deleteMedia(img.substring(7))
@@ -117,10 +124,8 @@ router
                 FileSystemService.deleteMedia(vid.substring(7))
         }
 
-        if (userID == null) {
-            res.sendStatus(401)
-        } else if (title && rate && content) {
-            let theUSER = await UserGateway.getById(userID)
+        if (title && rate && content) {
+            let currentUser = await UserGateway.getById(userID)
 
             try {
                 let resp = await ReviewGateway.update(reviewID, {
@@ -144,7 +149,7 @@ router
                 rating: rate,
                 images: imageURLs,
                 videos: videoURLs,
-                user: theUSER,
+                user: currentUser,
             })
         } else {
             res.sendStatus(400)
@@ -154,8 +159,7 @@ router
         let { reviewId } = req.body
 
         if (reviewId) {
-            let __iod = new ObjectId(reviewId)
-            let review = await ReviewGateway.getById(__iod)
+            let review = await ReviewGateway.getById(reviewId)
 
             if (review != null) {
                 for (let img of review.images)
@@ -165,14 +169,14 @@ router
             }
 
             try {
-                let resp = await ReviewGateway.delete(__iod)
+                let resp = await ReviewGateway.delete(reviewId)
                 console.log(resp)
             } catch (err) {
                 console.log('Error occurred:', err)
                 res.sendStatus(500)
             }
             res.status(200)
-            res.send('review Deleted')
+            res.send('Review Deleted')
         } else {
             res.sendStatus(400)
         }
@@ -194,38 +198,37 @@ router.patch('/', async (req, res) => {
         res.sendStatus(401)
     } else {
         let { reviewId, updateH: updateCode } = req.body
-        reviewId = new ObjectId(reviewId)
 
-        const x = await ReviewGateway.getById(reviewId)
-
+        const isReview = await ReviewGateway.getById(reviewId)
         let usedGateway
-
-        if (x) {
+        if (isReview) {
             usedGateway = ReviewGateway
             console.log('Review gateway')
         } else {
             usedGateway = CommentGateway
             console.log('Comment gateway')
         }
+
         let reviewOrComment = await usedGateway.getById(reviewId)
-        let resp
+        let response
         switch (updateCode) {
             case 'up':
                 if (reviewOrComment.likes.includes(userId) == false)
-                    resp = await usedGateway.like(reviewId, userId)
+                    response = await usedGateway.like(reviewId, userId)
                 break
             case 'up_':
-                resp = await usedGateway.unlike(reviewId, userId)
+                response = await usedGateway.unlike(reviewId, userId)
                 break
             case 'down':
                 if (reviewOrComment.dislikes.includes(userId) == false)
-                    resp = await usedGateway.dislike(reviewId, userId)
+                    response = await usedGateway.dislike(reviewId, userId)
                 break
             case 'down_':
-                resp = await usedGateway.undislike(reviewId, userId)
+                response = await usedGateway.undislike(reviewId, userId)
                 break
         }
-        console.log(resp)
+
+        console.log(response)
         res.status(200)
         res.send('done')
     }
@@ -235,6 +238,7 @@ router
     .route('/comment')
     .post(async function (req, res) {
         let { revID, parID, text } = req.body
+
         let userID
         let token = req.cookies.jwt
         if (token) {
@@ -245,20 +249,22 @@ router
                 console.log('Error occurred:', err)
             }
         }
+        if (userID == null) {
+            res.sendStatus(401)
+            return
+        }
 
-        let par_id = null
-        if (parID != 'null') par_id = new ObjectId(parID)
+        if (parID == 'null') {
+            parID = null
+        }
+
         if (revID == 'null') {
-            let parComment = await comments_db.findOne({
-                _id: new ObjectId(par_id),
-            })
+            let parComment = await CommentGateway.getById(parID)
             revID = parComment.reviewId
         }
 
-        if (userID == null) {
-            res.sendStatus(401)
-        } else if (revID && userID && text) {
-            let theUSER = await UserGateway.getById(userID)
+        if (revID && userID && text) {
+            let currentUser = await UserGateway.getById(userID)
             const newComment = {
                 content: text,
                 likes: [],
@@ -266,7 +272,7 @@ router
                 comments: [],
                 datePosted: new Date(),
                 userId: new ObjectId(userID),
-                parent: par_id,
+                parent: new ObjectId(parID),
                 reviewId: new ObjectId(revID),
                 edited: false,
             }
@@ -281,7 +287,7 @@ router
             res.send({
                 content: newComment.content,
                 _id: newComment._id,
-                user: theUSER,
+                user: currentUser,
             })
         } else {
             res.sendStatus(400)
@@ -292,22 +298,17 @@ router
 
         if (commID && text) {
             try {
-                let resp = await comments_db.updateOne(
-                    { _id: new ObjectId(commID) },
-                    {
-                        $set: {
-                            content: text,
-                            edited: true,
-                        },
-                    }
-                )
+                let resp = await CommentGateway.updateComment(commID, {
+                    content: text,
+                    edited: true,
+                })
                 console.log(resp)
             } catch (err) {
                 console.log('Error occurred:', err)
                 res.sendStatus(500)
             }
             res.status(200)
-            res.send('edited comment')
+            res.send('Edited comment')
         } else {
             res.sendStatus(400)
         }
@@ -315,9 +316,7 @@ router
     .delete(async function (req, res) {
         const { commID } = req.body
         try {
-            const resp = await comments_db.deleteOne({
-                _id: new ObjectId(commID),
-            })
+            const resp = await CommentGateway.deleteComment(commID)
             console.log(resp)
         } catch (err) {
             console.log('Error occurred:', err)
@@ -395,10 +394,9 @@ router.post('/upload', FileSystemService.uploadPfp, (req, res) => {
     let filePath
     try {
         filePath = req.file.path
-
         const updatedPath = filePath.replace('public', 'static')
-        console.log(updatedPath)
         console.log('File uploaded successfully:', req.file)
+
         res.json({ path: updatedPath })
     } catch (error) {
         console.log('No file was uploaded.')
@@ -408,16 +406,16 @@ router.post('/upload', FileSystemService.uploadPfp, (req, res) => {
 
 router.use((req, res) => {
     res.send(`
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title> 404 | ArcherEats</title>
-  </head>
-  <body>
-    <h1>for oh for | resource aint found! </h1>
-  </body>
-  </html>
-  `)
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title> 404 | ArcherEats</title>
+        </head>
+        <body>
+            <h1>for oh for | resource aint found! </h1>
+        </body>
+        </html>
+    `)
 })
 
 export default router
