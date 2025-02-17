@@ -64,7 +64,7 @@ router.use(loginRegisterRouter)
 
 router
     .route('/review')
-    .post(upload.array('mediaInput'), async function (req, res) {
+    .post(FileSystemService.uploadMedia, async function (req, res) {
         const { estabID, title, rate, content } = req.body
 
         let imageURls = []
@@ -117,7 +117,7 @@ router
             res.sendStatus(400)
         }
     })
-    .patch(upload.array('mediaInput'), async function (req, res) {
+    .patch(FileSystemService.uploadMedia, async function (req, res) {
         const { title, rate, content, reviewID } = req.body
 
         let userID

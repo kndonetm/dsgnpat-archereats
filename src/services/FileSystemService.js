@@ -28,7 +28,9 @@ class FileSystemService {
         uploadPfpMiddleware.single('file')(req, res, next)
     }
 
-    static uploadMedia(req, res, next) {}
+    static uploadMedia(req, res, next) {
+        uploadMediaMiddleware.array('mediaInput')(req, res, next)
+    }
 }
 
 export default FileSystemService
