@@ -1,10 +1,9 @@
 import { ObjectId } from 'mongodb'
 import { Router } from 'express'
 
-import searchRouter from './search-router.js'
 import userRouter from './user-router.js'
 import establishmentRouter from './establishment-router.js'
-import loginRegisterRouter from '../routes/login-register-router.js'
+import loginRegisterRouter from '../routes/login-router.js'
 
 import Review from '../model/Review.js'
 import ReviewGateway from '../model/ReviewGateway.js'
@@ -35,7 +34,6 @@ router.get('/about', (req, res) => {
 })
 
 router.use(userRouter)
-router.use(searchRouter)
 router.use(establishmentRouter)
 router.use(loginRegisterRouter)
 
