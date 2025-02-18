@@ -1,8 +1,5 @@
-import { getDb } from '../model/conn.js';
-
-const db = getDb();
-const establishments = db.collection("establishments");
-const reviews = db.collection("reviews");
+import ReviewGateway from '../model/ReviewGateway.js'
+import EstablishmentGateway from '../model/EstablishmentGateway.js'
 
 export const search = async (req, res) => {
     const query = req.query.q;
@@ -26,11 +23,11 @@ export const search = async (req, res) => {
     ];
     
     try {
-        const establishmentsArray = await establishments.find(estabQueryPipe).toArray();
-        const reviewsArray = await reviews.aggregate(reviewQueryPipe).toArray();
+        const establishmentsArray = await EstablishmentGateway.find(estabQueryPipe);
+        const reviewsArray = await ReviewGateway.getByEstablishmentId.aggregate(reviewQueryPipe);
         
         reviewsArray.forEach(async (review) => {
-            const establishment = await establishments.findOne({ _id: review.establishmentId });
+            const establishment = await EstablishmentGateway.getById({ _id: review.establishmentId });
             review.estabUsername = establishment.username;
             review.id = review._id.toString();
         });
