@@ -23,11 +23,11 @@ export const search = async (req, res) => {
     ];
     
     try {
-        const establishmentsArray = await EstablishmentGateway.find(estabQueryPipe);
-        const reviewsArray = await ReviewGateway.getByEstablishmentId.aggregate(reviewQueryPipe);
+        const establishmentsArray = await EstablishmentGateway.getAllEstablishments(estabQueryPipe);
+        const reviewsArray = await ReviewGateway.collection.aggregate(reviewQueryPipe).toArray();
         
         reviewsArray.forEach(async (review) => {
-            const establishment = await EstablishmentGateway.getById({ _id: review.establishmentId });
+            const establishment = await EstablishmentGateway.getById(review.establishmentId);
             review.estabUsername = establishment.username;
             review.id = review._id.toString();
         });

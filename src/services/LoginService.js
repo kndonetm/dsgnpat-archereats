@@ -9,7 +9,7 @@ export const login = async (req, res) => {
     const { username, password } = req.body;
     try {
         if (!username || !password) throw Error('Missing credentials');
-        const user = await UserGateway.getByUsername({ username });
+        const user = await UserGateway.getByUsername(username);
         if (!user) throw Error('Incorrect username');
         const auth = await bcrypt.compare(password, user.password);
         if (!auth) throw Error('Incorrect password');
@@ -25,11 +25,11 @@ export const signup = async (req, res) => {
     const { username, password, description, profilePicture } = req.body;
     try {
         if (!username || !password) throw Error('Missing credentials');
-        let user = await UserGateway.getByUsername({ username });
+        let user = await UserGateway.getByUsername(username);
         if (user) throw Error('Username already in use');
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
-        user = await UserGateway.insertOne({ username, password: hash, description, profilePicture });
+        user = await UserGateway.insertUser({ username, password: hash, description, profilePicture });
         const token = createToken(user.insertedId);
         res.cookie('jwt', token, { httpOnly: true, maxAge });
         res.status(200).json({ user: user.insertedId });
@@ -46,7 +46,7 @@ export const logout = (req, res) => {
 export const getUser = async (req, res) => {
     const username = req.params.username;
     try {
-        const user = await UserGateway.getByUsername({ username });
+        const user = await UserGateway.getByUsername(username);
         if (!user) throw Error('User not found');
         res.status(200).json(user);
     } catch (error) {
