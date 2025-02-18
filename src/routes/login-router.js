@@ -4,13 +4,10 @@ import { search } from '../services/SearchService.js';
 
 const router = express.Router();
 
-// Authentication Routes
 router.post('/login', login);
 router.post('/signup', signup);
 router.get('/logout', logout);
 router.get('/user/:username', getUser);
-
-// Search Route
 router.get('/search', search);
 
 export default router;
